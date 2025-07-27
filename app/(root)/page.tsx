@@ -45,8 +45,9 @@ const Page = () => {
         </div>
       </section>
 
+
     </>
   )
 }
 
-export default Page
+export default Page;
