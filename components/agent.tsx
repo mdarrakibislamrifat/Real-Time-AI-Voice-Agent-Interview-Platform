@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
 import Image from "next/image";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 enum CallStatus {
@@ -66,10 +66,47 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
         }
     }, [messages, callStatus, type, userId])
 
+    // const handleCall = async () => {
+    //     setCallStatus(CallStatus.CONNECTING);
+    //     await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, { variableValues: { username: userName, userid: userId } });
+    // }
+
+
     const handleCall = async () => {
         setCallStatus(CallStatus.CONNECTING);
-        await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, { variableValues: { username: userName, userid: userId } });
-    }
+
+        if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+            console.error('Audio input is not supported in this browser.');
+            setCallStatus(CallStatus.FINISHED);
+            return;
+        }
+
+        try {
+            // First, request microphone permission
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            // Only after permission granted, call vapi.start()
+            if (type === "generate") {
+                await vapi.start(
+                    undefined,
+                    undefined,
+                    undefined,
+                    process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!,
+                    {
+                        variableValues: { username: userName, userid: userId },
+                    }
+                );
+            } else {
+                // your other logic here
+            }
+
+        } catch (err) {
+            console.error('Error accessing microphone or starting call:', err);
+            setCallStatus(CallStatus.FINISHED);
+        }
+    };
+
+
 
 
     const handleDisconnect = async () => {
